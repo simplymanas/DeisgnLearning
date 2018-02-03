@@ -1,0 +1,71 @@
+@startuml TinyURLDesign
+'AutoInclude
+title __Tiny URL__ **Data Flow** Desgin \n <i>--just learning PlantUML--</i>
+
+'configruation
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+skinparam shadowing false
+
+skinparam sequence {
+    ArrowColor DeepSkyBlue
+    ActorBorderColor DeepSkyBlue
+    LifeLineBorderColor blue
+    LifeLineBackgroundColor #A9DCDF
+
+    ParticipantBorderColor DeepSkyBlue
+    ParticipantBackgroundColor DodgerBlue
+    ParticipantFontName Impact
+    ParticipantFontSize 17
+    ParticipantFontColor #A9DCDF
+
+    ActorBackgroundColor aqua
+    ActorFontColor DeepSkyBlue
+    ActorFontSize 17
+    ActorFontName Aapex
+}
+
+
+
+actor User #Green
+
+participant DNSserver
+participant Processor  << (P, #ADD1B2)  >>
+'autonumber "<font color=blue>step [00]  "
+
+'autonumber stop
+
+
+User --[#blue]> User : Verify the URL
+
+
+== user request ==
+'autonumber resume
+User -[#green]> DNSserver : Authentication Request
+DNSserver --> User : Authentication Response
+User -[#green]> DNSserver : www.tesco.com/abc/xyz.html
+'newpage
+box "Persistence Layer" #LightBlue
+database TinyURLDB
+end box
+DNSserver -> Processor : CreateTinyURL(post)
+== persistence & response ==
+
+Processor -> TinyURLDB : Store URL & TinyURL
+
+Processor -> DNSserver : GetTinyURL
+
+User <-- DNSserver : goo.gl/xYZ345
+
+note right of TinyURLDB #aqua
+    Should persist the
+    URL in cryptic format
+end note
+
+hnote over Processor : idle
+
+hide footbox
+@enduml
