@@ -1,0 +1,102 @@
+@startuml TinyURL_HighLevelDesign
+'AutoInclude
+title __Tiny URL__ **High Level Flow** Desgin \n Minimal 
+
+'configruation
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+skinparam backgroundColor #EEEBDC
+skinparam handwritten true
+skinparam shadowing false
+
+skinparam sequence {
+    ArrowColor DeepSkyBlue
+    ActorBorderColor DeepSkyBlue
+    LifeLineBorderColor blue
+    LifeLineBackgroundColor #A9DCDF
+
+    ParticipantBorderColor DeepSkyBlue
+    ParticipantBackgroundColor DodgerBlue
+    ParticipantFontName Impact
+    ParticipantFontSize 17
+    ParticipantFontColor #A9DCDF
+
+    ActorBackgroundColor aqua
+    ActorFontColor DeepSkyBlue
+    ActorFontSize 17
+    ActorFontName Aapex
+}
+
+
+
+actor Client #Green
+
+node WebServer 
+node API  
+database SQL
+
+Client --> WebServer
+WebServer --> API
+API --> SQL
+
+newpage
+
+title __Tiny URL__ **High Level Flow** Desgin \n Scale 
+
+actor Client #Green
+
+node WebServer 
+node WriteAPI  {
+    frame validator
+    frame "Tiny URL Creator" as tuc
+    frame "Tiny URL Writer" as tuw
+    frame "Tiny URL Cacher" as tuca
+}
+node ReadAPI {
+    frame "Capture\nStats" as cache_stats
+    frame "Fetch URL" as fetch_url
+} 
+node Analytics
+node Queue
+node Cache {
+    frame "Cache\nWarming" as cache_warming
+    frame "Cache\nInvalidation" as cache_invalidation
+}
+
+database ObjectStore
+database StatsStore
+
+Client --> WebServer : long url to tinyurl
+WebServer --> WriteAPI : create tiny url
+
+' Write Option 1
+WriteAPI --> ObjectStore : direct & \n immediate persistance
+WriteAPI --> Cache : Update cache
+tuc --> tuw
+tuc --> tuca
+
+' Write Option 2
+WriteAPI --> Queue : CQRS
+Queue --> ObjectStore
+
+' Read Option 1
+WebServer -down-> ReadAPI : 1. fetch tiny url
+ReadAPI -right-> fetch_url
+fetch_url -down-> Cache : 2. Lookup in Cache
+fetch_url -down-> ObjectStore : 3. Read from Store
+fetch_url -> Cache : 4. Update Cache
+fetch_url -> cache_stats : 5. Update Stats
+
+cache_stats --> StatsStore : Collect Stats
+
+note as x 
+1. What's the <b>cache warming</b> strategy?
+2. What's the <b>cache invalidation</b> strategy?
+end note
+
+note right of WebServer #aqua
+    Reverse Proxy
+end note
+
+@enduml
